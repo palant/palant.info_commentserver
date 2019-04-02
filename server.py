@@ -91,20 +91,6 @@ def github_request(method, uri, data=None):
         return json.load(response)
 
 
-def get_master_tree():
-    return github_request('GET', 'git/commits/{}'.format(get_master_commit()))['tree']['sha']
-
-
-def get_file_contents(path):
-    try:
-        return base64.b64decode(github_request('GET', 'contents/{}'.format(path))['content'])
-    except urllib.error.HTTPError as err:
-        if err.code == 404:
-            return None
-        else:
-            raise
-
-
 def save_comment(comment_data, reply):
     old_master = github_request('GET', 'git/refs/heads/master')['object']['sha']
     old_master_tree = github_request('GET', 'git/commits/{}'.format(old_master))['tree']['sha']
