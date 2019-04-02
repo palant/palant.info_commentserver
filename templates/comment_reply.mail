@@ -1,0 +1,16 @@
+To: {{recipient|mime|safe}}
+From: {{sender|mime|safe}}
+Subject: Reply to your comment on the blog post "{{title|mime|safe}}"
+Content-Type: text/html; charset="UTF-8"
+
+<p>Hello {{name}},</p>
+
+<p>your comment on the blog post <a href="{{baseurl}}{{uri}}">{{title}}</a> has been {% if approved %}approved{% else %}rejected{% endif %}. The post author left the following reply:</p>
+
+{{reply|safe}}
+
+{% if approved %}
+<p>You can see your comment and the reply <a href="{{baseurl}}{{uri}}#c{{comment_id}}">here</a>.</p>
+{% endif %}
+
+<p><small>Note: You are receiving this message because you wanted to be notified about author's reply. Your email address has been deleted now and you will not receive further messages.</small></p>

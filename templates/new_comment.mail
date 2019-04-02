@@ -1,0 +1,19 @@
+To: {{recipient|mime|safe}}
+From: {{sender|mime|safe}}
+Subject: New comment on your blog post "{{title|mime|safe}}"
+Content-Type: text/html; charset="UTF-8"
+
+<p>Hello blog owner,</p>
+
+<p>
+  the commenter {% if web -%}
+    <a href="{{web}}">{{name}}</a>
+  {%- else -%}
+    {{name}}
+  {%- endif %} left a comment on your blog post <a href="{{baseurl}}{{uri}}">{{title}}</a>.
+  The comment hasn't been published yet, please <a href="{{baseurl}}/comment/review/{{id}}">review it</a>.
+</p>
+
+<p>Comment text:</p>
+
+{{message|safe}}
