@@ -10,7 +10,7 @@ This comment management server has been developed specifically for palant.de. It
 
 # Requirements
 
-[Python 3](https://www.python.org/) with [flask](http://flask.pocoo.org/), [markdown](https://python-markdown.github.io/), [bleach](https://bleach.readthedocs.io/) [frontmatter](https://python-frontmatter.readthedocs.io/) modules.
+[Python 3](https://www.python.org/) with [flask](http://flask.pocoo.org/), [markdown](https://python-markdown.github.io/), [bleach](https://bleach.readthedocs.io/), [frontmatter](https://python-frontmatter.readthedocs.io/) modules.
 
 # Running
 
