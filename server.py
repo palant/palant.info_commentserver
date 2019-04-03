@@ -167,6 +167,7 @@ def save_comment(comment_data, reply):
     })
 
     if config.has_option('hook', 'postupdate'):
+        sleep(5)
         subprocess.check_call(config.get('hook', 'postupdate'), shell=True)
 
     return comment_id
