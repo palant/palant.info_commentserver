@@ -32,7 +32,10 @@ The server expects a `config.ini` file in the same directory as `server.py`. Exa
     smtp_server = mail.example.com
     sender = me@example.com
 
-The `access_token` value must be a GitHub access token with write privileges for the GitHub repository.
+    [hook]
+    postupdate = /usr/local/bin/generate_site
+
+The `access_token` value must be a GitHub access token with write privileges for the GitHub repository. The `postupdate` value is optional, this command will be run after a comment has been added to the repository.
 
 # Comment submission process
 

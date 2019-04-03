@@ -10,6 +10,7 @@ import os
 import re
 import secrets
 import smtplib
+import subprocess
 import sys
 import urllib
 
@@ -164,6 +165,9 @@ def save_comment(comment_data, reply):
     github_request('PATCH', 'git/refs/heads/master', {
         'sha': commit
     })
+
+    if config.has_option('hook', 'postupdate'):
+        subprocess.check_call(config.get('hook', 'postupdate'), shell=True)
 
     return comment_id
 
