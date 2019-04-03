@@ -12,6 +12,7 @@ import secrets
 import smtplib
 import subprocess
 import sys
+import time
 import urllib
 
 import flask
@@ -167,7 +168,7 @@ def save_comment(comment_data, reply):
     })
 
     if config.has_option('hook', 'postupdate'):
-        sleep(5)
+        time.sleep(5)
         subprocess.check_call(config.get('hook', 'postupdate'), shell=True)
 
     return comment_id
