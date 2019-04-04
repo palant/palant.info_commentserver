@@ -94,8 +94,7 @@ def github_request(method, uri, data=None):
 
 
 def save_comment(comment_data, reply):
-    old_master = github_request('GET', 'git/refs/heads/master')['object']['sha']
-    old_master_tree = github_request('GET', 'git/commits/{}'.format(old_master))['tree']['sha']
+    old_master = github_request('GET', 'commits/master')
 
     dirpath = comment_data['article'].strip('/')
     dir_contents = github_request('GET', 'contents/content/{}'.format(dirpath))
@@ -153,14 +152,14 @@ def save_comment(comment_data, reply):
     })
 
     tree = github_request('POST', 'git/trees', {
-        'base_tree': old_master_tree,
+        'base_tree': old_master['commit']['tree']['sha'],
         'tree': tree
     })['sha']
 
     commit = github_request('POST', 'git/commits', {
         'message': 'Added blog comment',
         'tree': tree,
-        'parents': [old_master],
+        'parents': [old_master['sha']],
     })['sha']
 
     github_request('PATCH', 'git/refs/heads/master', {
