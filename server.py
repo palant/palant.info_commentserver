@@ -25,16 +25,18 @@ basedir = os.path.dirname(sys.argv[0]) or '.'
 config = configparser.ConfigParser()
 config.read(os.path.join(basedir, 'config.ini'))
 
+debug = False
 app = flask.Flask(
     'comment_management',
     template_folder=os.path.join(basedir, 'templates')
 )
 
-def add_header(name, value):
+def add_debug_header(name, value):
     def decorator(func):
         def wrapper(*args):
             response = func(*args)
-            response.headers[name] = value
+            if debug:
+                response.headers[name] = value
             return response
         return wrapper
     return decorator
@@ -199,8 +201,8 @@ def send_mail(template_name, from_addr, to_addr, **params):
 
 
 @app.route('/comment/submit', methods=['POST', 'OPTIONS'])
-@add_header('Access-Control-Allow-Origin', 'http://localhost:1313')
-@add_header('Access-Control-Allow-Headers', 'X-XMLHttpRequest')
+@add_debug_header('Access-Control-Allow-Origin', 'http://localhost:1313')
+@add_debug_header('Access-Control-Allow-Headers', 'X-XMLHttpRequest')
 def submit():
     if flask.request.method == 'OPTIONS':
         return flask.make_response('', 200)
@@ -290,4 +292,5 @@ def review_comment(id):
         return flask.make_response('Invalid request', 500)
 
 if __name__ == '__main__':
+    debug = True
     app.run(host='localhost', port=5000, debug=True)
