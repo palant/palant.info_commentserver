@@ -196,8 +196,7 @@ def send_mail(template_name, from_addr, to_addr, **params):
 
     message = env.get_template(template_name).render(params)
     with smtplib.SMTP(config.get('mail', 'smtp_server')) as smtp:
-        sender = config.get('mail', 'sender')
-        smtp.sendmail(sender, sender, message.encode('utf-8'))
+        smtp.sendmail(from_addr, to_addr, message.encode('utf-8'))
 
 
 @app.route('/comment/submit', methods=['POST', 'OPTIONS'])
