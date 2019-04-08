@@ -168,10 +168,6 @@ def save_comment(comment_data, reply):
         'sha': commit
     })
 
-    if config.has_option('hook', 'postupdate'):
-        time.sleep(5)
-        subprocess.check_call(config.get('hook', 'postupdate'), shell=True)
-
     return comment_id
 
 
