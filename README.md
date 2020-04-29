@@ -1,9 +1,9 @@
-This comment management server has been developed specifically for palant.de. It is unlikely to meet your exact requirements, provided here for reference only.
+This comment management server has been developed specifically for palant.info. It is unlikely to meet your exact requirements, provided here for reference only.
 
 # Design goals
 
 * Used by a website built on a static site generator (Hugo).
-* Comments and replies stored in the <https://github.com/palant/palant.de> repository along with other website content.
+* Comments and replies stored in the <https://github.com/palant/palant.info> repository along with other website content.
 * Pre-moderated comments, published only when approved by site owner.
 * Direct replies only by site owner.
 * Commenter's email address removed after moderation, notifications about replies only if provided during moderation.
@@ -19,13 +19,13 @@ This comment management server has been developed specifically for palant.de. It
 The server expects a `config.ini` file in the same directory as `server.py`. Example configuration:
 
     [site]
-    baseurl = https://palant.de
+    baseurl = https://palant.info
     publicdir = /var/www/public
     queuedir = /var/spool/comments
 
     [github]
     user = palant
-    repository = palant.de
+    repository = palant.info
     access_token = 1234567890abcdef1234567890abcdef12345678
 
     [mail]
@@ -36,7 +36,7 @@ The `access_token` value must be a GitHub access token with write privileges for
 
 # Comment submission process
 
-The comment submission form can be seen in `layout/_default/single.html` template in the <https://github.com/palant/palant.de> repository and the JavaScript code behind it is in `static/js/comments.js`. The server receives the comment, validates it and saves it to the queue directory with a random name. The blog owner is notified with an email mentioning the URL where the comment can be reviewed.
+The comment submission form can be seen in `layout/_default/single.html` template in the <https://github.com/palant/palant.info> repository and the JavaScript code behind it is in `static/js/comments.js`. The server receives the comment, validates it and saves it to the queue directory with a random name. The blog owner is notified with an email mentioning the URL where the comment can be reviewed.
 
 The blog post is identified by its URI in the path. To validate the URI and retrieve additional data, the server reads the static file generated for the blog post from the server's public directory. In particular, it expects to find a `data-path` attribute on the comment form determining the path of the blog post within the original repository.
 
