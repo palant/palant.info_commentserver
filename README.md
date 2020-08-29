@@ -36,7 +36,7 @@ The `access_token` value must be a GitHub access token with write privileges for
 
 # Comment submission process
 
-The comment submission form can be seen in `layout/_default/single.html` template in the <https://github.com/palant/palant.info> repository and the JavaScript code behind it is in `static/js/comments.js`. The server receives the comment, validates it and saves it to the queue directory with a random name. The blog owner is notified with an email mentioning the URL where the comment can be reviewed.
+The comment submission form can be seen in `layouts/partials/components/comments.html` template in the <https://github.com/palant/palant.info> repository and the JavaScript code behind it is in `assets/js/comments.js`. The server receives the comment, validates it and saves it to the queue directory with a random name. The blog owner is notified with an email mentioning the URL where the comment can be reviewed.
 
 The blog post is identified by its URI in the path. To validate the URI and retrieve additional data, the server reads the static file generated for the blog post from the server's public directory. In particular, it expects to find a `data-path` attribute on the comment form determining the path of the blog post within the original repository.
 
