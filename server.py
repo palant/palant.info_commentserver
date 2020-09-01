@@ -134,7 +134,8 @@ def save_comment(comment_data, reply):
     if reply:
         reply_id = '{:06}'.format(1)
         reply_contents = json.dumps({
-            'id': reply_id
+            'id': reply_id,
+            'publishDate': datetime.datetime.utcnow().isoformat(' ', 'seconds')
         }, indent=2) + '\n\n' + reply
         tree.append({
             'path': flask.safe_join('content', *dirpath.split('/'), 'comment_{}_reply_{}.html'.format(comment_id, reply_id)),
