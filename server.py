@@ -293,6 +293,9 @@ def validate_mention(data):
     if not data.get('web') or not is_same_origin(data['web'], data['source']):
         data['web'] = data['source']
 
+    if data.get('mentionTitle') and len(data['mentionTitle']) > 80:
+        data['mentionTitle'] = data['mentionTitle'][0:80] + '…'
+
     if data.get('message', '').endswith('…'):
         data['message'] = data['message'] + ' <a href="{}">more</a>'.format(data['web'])
 
