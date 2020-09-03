@@ -22,6 +22,12 @@ cleaner = bleach.sanitizer.Cleaner(
     filters=[NofollowFilter]
 )
 
+cleaner_stripping = bleach.sanitizer.Cleaner(
+    tags=['p', 'br', 'hr', 'pre'] + bleach.sanitizer.ALLOWED_TAGS,
+    filters=[NofollowFilter],
+    strip=True
+)
+
 def format_comment(text):
     html = formatter.convert(text)
     return cleaner.clean(html)

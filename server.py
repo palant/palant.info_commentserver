@@ -13,13 +13,16 @@ import smtplib
 import subprocess
 import sys
 import time
+import traceback
 import urllib
 
+import bs4
 import flask
 import frontmatter
 import jinja2
+import mf2py
 
-from format import format_comment
+from format import format_comment, cleaner_stripping as cleaner
 
 basedir = os.path.dirname(sys.argv[0]) or '.'
 config = configparser.ConfigParser()
@@ -46,6 +49,15 @@ def resolve_path(path):
     if not os.path.isabs(path):
         path = os.path.join(basedir, path)
     return os.path.abspath(path)
+
+
+def is_same_origin(url1, url2):
+    try:
+        parsed1 = urllib.parse.urlparse(url1)
+        parsed2 = urllib.parse.urlparse(url2)
+    except:
+        return False
+    return parsed1.scheme == parsed2.scheme and parsed1.netloc == parsed2.netloc
 
 
 def get_article_path(uri):
@@ -122,6 +134,8 @@ def save_comment(comment_data, reply):
         'publishDate': comment_data['date'],
         'author': comment_data['name'],
         'authorUrl': comment_data['web'],
+        'type': comment_data.get('type', 'comment'),
+        'title': comment_data.get('mentionTitle', ''),
         'id': comment_id,
     }, indent=2) + '\n\n' + comment_data['message']
     tree.append({
@@ -196,10 +210,97 @@ def send_mail(template_name, from_addr, to_addr, **params):
         smtp.sendmail(from_addr, to_addr, message.encode('utf-8'))
 
 
+def trim_html(html, ideal_length, max_length):
+    if len(html) > ideal_length:
+        index1 = html.rfind('<', 0, ideal_length)
+        index2 = html.rfind('>', 0, ideal_length)
+        if index1 >= 0 and index2 < index1:
+            html = html[0:index1]
+        else:
+            match = re.search(r'[.?!<]', html[ideal_length:])
+            if match:
+                html = html[0:ideal_length + match.start()]
+        if len(html) > max_length:
+            html = html[0:max_length]
+        html = html + '…'
+    return html
+
+
+def validate_mention(data):
+    with urllib.request.urlopen(data['source'], timeout=10) as response:
+        content_type = response.info().get('Content-Type', '').lower()
+        if content_type != 'text/html' and not content_type.startswith('text/html;'):
+            raise Exception('Unexpected content type: {}'.format(content_type))
+
+        contents = response.read(1024 * 1024)
+
+    doc = bs4.BeautifulSoup(contents, 'html5lib')
+    valid = False
+    entry = None
+    expected = config.get('site', 'baseurl') + data['uri']
+    for link in doc.find_all('a'):
+        if link.get('href') == expected:
+            valid = True
+            entry = link.find_parent(class_='h-entry')
+            if entry:
+                break
+
+    if not valid:
+        raise Exception('Link not found on the source page')
+
+    if entry:
+        props = mf2py.parse(entry, url=data['source'])['items'][0]['properties']
+
+        if props.get('url'):
+            data['web'] = props.get('url')[0]
+        if props.get('name'):
+            data['mentionTitle'] = props.get('name')[0]
+
+        if props.get('content'):
+            message = props['content'][0]['html']
+        else:
+            message = str(entry)
+        data['message'] = cleaner.clean(trim_html(message, 2000, 2500))
+
+        authors = set()
+        for author in props.get('author', []):
+            for name in author['properties'].get('name', []):
+                authors.add(name)
+        data['name'] = ', '.join(sorted(authors))
+
+    if not data.get('web'):
+        el = doc.find('link', rel='canonical')
+        if el:
+            data['web'] = el.get('href', '').strip()
+
+    for selector in [{'name': 'meta', 'property': 'og:title'}, {'name': 'title'}]:
+        if not data.get('mentionTitle'):
+            el = doc.find(**selector)
+            if el:
+                data['mentionTitle'] = el.get('content', el.get_text()).strip()
+
+    for selector in [{'name': 'meta', 'attrs': {'name': 'description'}}, {'name': 'meta', 'property': 'og:description'}]:
+        if not data.get('message'):
+            el = doc.find(**selector)
+            if el:
+                data['message'] = cleaner.clean(trim_html(el.get('content', '').strip(), 2000, 2500))
+
+    if not data.get('name'):
+        el = doc.find('meta', attrs={'name': 'author'})
+        if el:
+            data['name'] = el.get('content', '').strip()
+
+    if not data.get('web') or not is_same_origin(data['web'], data['source']):
+        data['web'] = data['source']
+
+    if data.get('message', '').endswith('…'):
+        data['message'] = data['message'] + ' <a href="{}">more</a>'.format(data['web'])
+
+
 @app.route('/comment/submit', methods=['POST', 'OPTIONS'])
 @add_debug_header('Access-Control-Allow-Origin', 'http://localhost:1313')
 @add_debug_header('Access-Control-Allow-Headers', 'X-XMLHttpRequest')
-def submit():
+def submit_comment():
     if flask.request.method == 'OPTIONS':
         return flask.make_response('', 200)
 
@@ -252,6 +353,53 @@ def submit():
     return flask.jsonify({'error': False, 'message': 'Your comment has been submitted and awaits moderation.'})
 
 
+@app.route('/mention/submit', methods=['POST', 'OPTIONS'])
+def submit_mention():
+    if flask.request.method == 'OPTIONS':
+        return flask.make_response('', 200)
+
+    source = flask.request.form.get('source', '').strip()
+    target = flask.request.form.get('target', '').strip()
+    if not source or not target:
+        return flask.make_response('Source and target are mandatory.', 400)
+
+    try:
+        scheme = urllib.parse.urlparse(source).scheme
+        if scheme not in ('http', 'https'):
+            raise Exception()
+    except:
+        return flask.make_response('Failed to parse source URL.', 400)
+
+    try:
+        uri = urllib.parse.urlparse(target).path
+    except:
+        return flask.make_response('Failed to parse target URL.', 400)
+    if not uri or not uri.startswith('/') or re.search(r'\s', uri):
+        return flask.make_response('Article URI not specified or invalid.', 400)
+
+    article, title = get_article_path(uri)
+    if not article:
+        return flask.make_response('Could not find article path.', 400)
+
+    id = secrets.token_hex(32)
+    data = {
+        'id': id,
+        'date': datetime.datetime.utcnow().isoformat(' ', 'seconds'),
+        'type': 'mention',
+        'source': source,
+        'uri': uri,
+        'article': article,
+        'title': title,
+    }
+
+    with open(os.path.join(get_queue_dir(), id), 'w', encoding='utf-8') as file:
+        json.dump(data, file, ensure_ascii=False)
+
+    sender = config.get('mail', 'sender')
+    send_mail('new_mention.mail', sender, sender, **data)
+    return flask.make_response('', 202)
+
+
 @app.route('/comment/review/<id>', methods=['GET', 'POST'])
 def review_comment(id):
     if not re.match(r'^[\da-f]+$', id):
@@ -262,6 +410,14 @@ def review_comment(id):
         data = json.load(file)
 
     if flask.request.method == 'GET':
+        if data.get('type') == 'mention':
+            try:
+                validate_mention(data)
+                with open(path, 'w', encoding='utf-8') as file:
+                    json.dump(data, file, ensure_ascii=False)
+            except:
+                data['error'] = traceback.format_exc()
+
         return flask.render_template('review_comment.html', baseurl=config.get('site', 'baseurl'), **data)
 
     if 'approve' in flask.request.form or 'reject' in flask.request.form:

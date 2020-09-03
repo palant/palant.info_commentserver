@@ -1,0 +1,11 @@
+To: {{recipient|mime|safe}}
+From: {{sender|mime|safe}}
+Subject: New mention on your blog post "{{title|mime|safe}}"
+Content-Type: text/html; charset="UTF-8"
+
+<p>Hello blog owner,</p>
+
+<p>
+  Your blog post <a href="{{baseurl}}{{uri}}">{{title}}</a> has been mentioned on <a href="{{source}}">{{source}}</a>.
+  The mention hasn't been published yet, please <a href="{{baseurl}}/comment/review/{{id}}">review it</a>.
+</p>

@@ -10,7 +10,7 @@ This comment management server has been developed specifically for palant.info. 
 
 # Requirements
 
-[Python 3](https://www.python.org/) with [flask](http://flask.pocoo.org/), [markdown](https://python-markdown.github.io/), [bleach](https://bleach.readthedocs.io/), [frontmatter](https://python-frontmatter.readthedocs.io/) modules.
+[Python 3](https://www.python.org/) with [flask](http://flask.pocoo.org/), [markdown](https://python-markdown.github.io/), [bleach](https://bleach.readthedocs.io/), [frontmatter](https://python-frontmatter.readthedocs.io/), [mf2py](https://github.com/microformats/mf2py) modules.
 
 # Running
 
@@ -41,6 +41,12 @@ The comment submission form can be seen in `layouts/partials/components/comments
 The blog post is identified by its URI in the path. To validate the URI and retrieve additional data, the server reads the static file generated for the blog post from the server's public directory. In particular, it expects to find a `data-path` attribute on the comment form determining the path of the blog post within the original repository.
 
 The blog owner can either approve or reject the comment in the moderation interface, optionally specifying a reply. If the comment is approved, both the comment and the reply are added to the GitHub repository. With either action the comment data is removed from the queue, and with it the commenter's email address.
+
+# Webmention support
+
+This server supports receiving [Webmentions](https://www.w3.org/TR/webmention/). The Webmention endpoint is exposed under `/mention/submit`. When a request is received, it goes through the same pre-moderation as the comments. Initially, it is only validated that the target URL points to an article that has a comment form. After that, the mention is queued and the blog owner is notified via email.
+
+The next validation step is performed only when the blog owner opens up the review URL. Among other things, this approach prevents the Webmention interface from being [abused for DDoS attacks](https://indieweb.org/DDOS). The source URL is downloaded, the link existence is verified and page metadata is retrieved. The metadata is then used to compose “comment” data. If approved, this comment is added to the GitHub repository.
 
 # Security considerations
 
