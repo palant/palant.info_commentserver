@@ -353,13 +353,7 @@ def submit_comment():
     return flask.jsonify({'error': False, 'message': 'Your comment has been submitted and awaits moderation.'})
 
 
-@app.route('/mention/submit', methods=['POST', 'OPTIONS'])
-def submit_mention():
-    if flask.request.method == 'OPTIONS':
-        return flask.make_response('', 200)
-
-    source = flask.request.form.get('source', '').strip()
-    target = flask.request.form.get('target', '').strip()
+def process_mention(source, target):
     if not source or not target:
         return flask.make_response('Source and target are mandatory.', 400)
 
@@ -398,6 +392,43 @@ def submit_mention():
     sender = config.get('mail', 'sender')
     send_mail('new_mention.mail', sender, sender, **data)
     return flask.make_response('', 202)
+
+@app.route('/mention/submit', methods=['POST', 'OPTIONS'])
+def submit_mention():
+    if flask.request.method == 'OPTIONS':
+        return flask.make_response('', 200)
+
+    source = flask.request.form.get('source', '').strip()
+    target = flask.request.form.get('target', '').strip()
+    return process_mention(source, target)
+
+
+@app.route('/mention/pingback', methods=['POST', 'OPTIONS'])
+def submit_pingback():
+    if flask.request.method == 'OPTIONS':
+        return flask.make_response('', 200)
+
+    doc = bs4.BeautifulSoup(flask.request.data, 'html5lib')
+    method = doc.methodname
+    if not method or method.get_text() != 'pingback.ping':
+        return flask.make_response('Unsupported method.', 400)
+
+    params = doc.params
+    if not params:
+        return flask.make_response('No parameters given.', 400)
+
+    params = params.find_all('value')
+    if len(params) != 2:
+        return flask.make_response('Unexpected parameter count.', 400)
+
+    values = []
+    for param in params:
+        value = param.find('string')
+        if not value:
+            return flask.make_response('Unexpected parameter type.', 400)
+        values.append(value.get_text().strip())
+    source, target = values
+    return process_mention(source, target)
 
 
 @app.route('/comment/review/<id>', methods=['GET', 'POST'])

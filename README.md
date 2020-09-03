@@ -42,11 +42,11 @@ The blog post is identified by its URI in the path. To validate the URI and retr
 
 The blog owner can either approve or reject the comment in the moderation interface, optionally specifying a reply. If the comment is approved, both the comment and the reply are added to the GitHub repository. With either action the comment data is removed from the queue, and with it the commenter's email address.
 
-# Webmention support
+# Webmention and Pingback support
 
-This server supports receiving [Webmentions](https://www.w3.org/TR/webmention/). The Webmention endpoint is exposed under `/mention/submit`. When a request is received, it goes through the same pre-moderation as the comments. Initially, it is only validated that the target URL points to an article that has a comment form. After that, the mention is queued and the blog owner is notified via email.
+This server supports receiving [Webmentions](https://www.w3.org/TR/webmention/) and its older counterpart [Pingbacks](https://www.hixie.ch/specs/pingback/pingback-1.0). The Webmention endpoint is exposed under `/mention/submit`, the Pingback endpoint under `/mention/pingback`. When a request is received, it goes through the same pre-moderation as the comments. Initially, it is only validated that the target URL points to an article that has a comment form. After that, the mention is queued and the blog owner is notified via email.
 
-The next validation step is performed only when the blog owner opens up the review URL. Among other things, this approach prevents the Webmention interface from being [abused for DDoS attacks](https://indieweb.org/DDOS). The source URL is downloaded, the link existence is verified and page metadata is retrieved. The metadata is then used to compose “comment” data. If approved, this comment is added to the GitHub repository.
+The next validation step is performed only when the blog owner opens up the review URL. Among other things, this approach prevents the interface from being [abused for DDoS attacks](https://indieweb.org/DDOS). The source URL is downloaded, the link existence is verified and page metadata is retrieved. The metadata is then used to compose “comment” data. If approved, this comment is added to the GitHub repository.
 
 # Security considerations
 
